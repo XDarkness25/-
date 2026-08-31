@@ -4,40 +4,40 @@
 
 “归念”用于在一次学习结束时，把会话内容收束为稳定、可阅读、可由“一念”程序解析的学习记录。
 
-协议标识：`yinian.guinian/v1`
+协议标识：\`yinian.guinian/v1\`
 
 ## 2. 触发规则
 
 以下写法等价：
 
-```text
+\`\`\`text
 归念：秩与零空间
 归念: 秩与零空间
 /归念 秩与零空间
-```
+\`\`\`
 
 识别步骤：
 
-1. 对输入执行 `trim()`。
-2. 执行 Unicode `NFKC` 规范化，使全角冒号与半角冒号等价。
+1. 对输入执行 \`trim()\`。
+2. 执行 Unicode \`NFKC\` 规范化，使全角冒号与半角冒号等价。
 3. 使用正则表达式：
 
-```js
+\`\`\`js
 /^\/?归念(?:\s*:\s*|\s+)(.+?)\s*$/u
-```
+\`\`\`
 
 4. 捕获组为主题；主题为空时不触发。
 5. 只要整条用户消息符合规则，就进入归念模式，不把它当作普通总结请求。
 
 参考实现：
 
-```ts
+\`\`\`ts
 export function parseGuinianTrigger(input: string): string | null {
   const normalized = input.trim().normalize("NFKC");
   const match = normalized.match(/^\/?归念(?:\s*:\s*|\s+)(.+?)\s*$/u);
   return match?.[1]?.trim() || null;
 }
-```
+\`\`\`
 
 ## 3. 输出原则
 
@@ -47,11 +47,11 @@ export function parseGuinianTrigger(input: string): string | null {
 - 某一栏没有内容时写“暂无”，不能删除该栏。
 - 数学公式使用 LaTeX；代码使用带语言标记的代码块。
 - 先输出人类可读记录，再输出一个机器数据块。
-- 机器数据必须是合法 JSON，不能写注释、尾随逗号或 Markdown 以外的说明。
+- 机器数据必须是合法 JSON，不能写注释或尾随逗号。
 
 ## 4. 人类可读格式
 
-```markdown
+\`\`\`markdown
 # 归念｜{主题}
 
 - 学科：{学科分类}
@@ -80,7 +80,7 @@ export function parseGuinianTrigger(input: string): string | null {
 ## 待解决问题
 
 1. {下一步仍需澄清或学习的问题}
-```
+\`\`\`
 
 固定一级内容字段为：
 
@@ -94,9 +94,9 @@ export function parseGuinianTrigger(input: string): string | null {
 
 人类可读记录之后必须紧接：
 
-```markdown
+\`\`\`\`markdown
 <!-- YINIAN_GUIAN_V1_START -->
-```json
+\`\`\`json
 {
   "schema_version": "yinian.guinian/v1",
   "type": "guinian",
@@ -132,20 +132,20 @@ export function parseGuinianTrigger(input: string): string | null {
   ],
   "open_questions": ["待解决问题"]
 }
-```
+\`\`\`
 <!-- YINIAN_GUIAN_V1_END -->
-```
+\`\`\`\`
 
-注意：协议中的标记沿用 `GUIAN` 拼写作为稳定机器标识，不能自行改名。
+注意：协议中的标记沿用 \`GUIAN\` 拼写作为稳定机器标识，不能自行改名。
 
 ## 6. 解析规则
 
 应用端应优先解析机器数据块：
 
-1. 查找 `YINIAN_GUIAN_V1_START` 和 `YINIAN_GUIAN_V1_END`。
+1. 查找 \`YINIAN_GUIAN_V1_START\` 和 \`YINIAN_GUIAN_V1_END\`。
 2. 提取两者之间 JSON 代码块的内容。
-3. 使用 `JSON.parse`。
-4. 用 `schemas/guinian.v1.schema.json` 校验。
+3. 使用 \`JSON.parse\`。
+4. 用 \`schemas/guinian.v1.schema.json\` 校验。
 5. 校验失败时保留原文，并提示用户修复或重新生成；不得静默丢弃。
 6. 若机器数据块缺失，可显示 Markdown，但不得宣称已经完成结构化导入。
 
@@ -153,6 +153,6 @@ export function parseGuinianTrigger(input: string): string | null {
 
 把文件上传 GitHub 只建立了“单一事实来源”，不会让所有 ChatGPT 会话自动读取它。要稳定识别：
 
-- 在 ChatGPT“自学规划”项目的自定义指令中加入 `prompts/guinian-system.md`。
+- 在 ChatGPT“自学规划”项目的自定义指令中加入 \`prompts/guinian-system.md\`。
 - 新会话必须位于该项目中，或显式提供同一提示词。
 - “一念”网页/小程序若要自动入库，需要实现第 6 节的解析流程。
