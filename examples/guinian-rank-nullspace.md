@@ -50,7 +50,7 @@ x=t\begin{bmatrix}-1\\-1\\1\end{bmatrix}.
 2. 列空间的基为什么要回到原矩阵的主元列中选取。
 
 <!-- YINIAN_GUIAN_V1_START -->
-\`\`\`json
+```json
 {
   "schema_version": "yinian.guinian/v1",
   "type": "guinian",
@@ -99,5 +99,5 @@ x=t\begin{bmatrix}-1\\-1\\1\end{bmatrix}.
     "列空间的基为什么要回到原矩阵的主元列中选取。"
   ]
 }
-\`\`\`
+```
 <!-- YINIAN_GUIAN_V1_END -->
