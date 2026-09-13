@@ -49,10 +49,10 @@ x=t\begin{bmatrix}-1\\-1\\1\end{bmatrix}.
 1. 如何从行最简形系统地写出零空间的一组基。
 2. 列空间的基为什么要回到原矩阵的主元列中选取。
 
-<!-- YINIAN_GUIAN_V1_START -->
+YINIAN_GUINIAN_V2_START
 ```json
 {
-  "schema_version": "yinian.guinian/v1",
+  "schema_version": "yinian.guinian/v2",
   "type": "guinian",
   "title": "秩与零空间",
   "subject": {
@@ -100,4 +100,4 @@ x=t\begin{bmatrix}-1\\-1\\1\end{bmatrix}.
   ]
 }
 ```
-<!-- YINIAN_GUIAN_V1_END -->
+YINIAN_GUINIAN_V2_END
