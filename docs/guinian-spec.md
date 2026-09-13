@@ -1,67 +1,24 @@
-# 一念 · 归念格式规范 v1
+# 一念 · 归念 v2 格式
 
-## 1. 用途
+## Why v2
 
-“归念”用于在一次学习结束时，把会话内容收束为稳定、可阅读、可由“一念”程序解析的学习记录。
+v1 used HTML comments as machine boundaries. Some chat renderers omit those comments when users copy rendered text, leaving 一念 without reliable boundaries. v2 uses visible plain-text sentinels and keeps v1 readable only for migration.
 
-协议标识：`yinian.guinian/v1`
+## Human-readable record
 
-## 2. 触发规则
-
-以下写法等价：
-
-```text
-归念：秩与零空间
-归念: 秩与零空间
-/归念 秩与零空间
-```
-
-识别步骤：
-
-1. 对输入执行 `trim()`。
-2. 执行 Unicode `NFKC` 规范化，使全角冒号与半角冒号等价。
-3. 使用正则表达式：
-
-```js
-/^\/?归念(?:\s*:\s*|\s+)(.+?)\s*$/u
-```
-
-4. 捕获组为主题；主题为空时不触发。
-5. 只要整条用户消息符合规则，就进入归念模式，不把它当作普通总结请求。
-
-参考实现：
-
-```ts
-export function parseGuinianTrigger(input: string): string | null {
-  const normalized = input.trim().normalize("NFKC");
-  const match = normalized.match(/^\/?归念(?:\s*:\s*|\s+)(.+?)\s*$/u);
-  return match?.[1]?.trim() || null;
-}
-```
-
-## 3. 输出原则
-
-- 只总结当前学习会话中真实讨论过的内容，不补造用户未学过的结论。
-- 表述应简洁但完整，优先保留定义、推理链、用户已澄清的误区和仍未解决的问题。
-- 标题顺序与名称固定，不能换成自由发挥的普通总结。
-- 某一栏没有内容时写“暂无”，不能删除该栏。
-- 数学公式使用 LaTeX；代码使用带语言标记的代码块。
-- 先输出人类可读记录，再输出一个机器数据块。
-- 机器数据必须是合法 JSON，不能写注释或尾随逗号。
-
-## 4. 人类可读格式
+Use this exact order:
 
 ```markdown
 # 归念｜{主题}
 
 - 学科：{学科分类}
 - 标签：{标签1}、{标签2}
-- 一句话收束：{本次学习最重要的认识}
+- 一句话收束：{本次最重要的认识}
 
 ## 定义和核心要点
 
 1. **{概念名}**：{定义或结论}
-   - 直观理解：{直观解释}
+   - 直观理解：{解释}
    - 关键关系：{公式、条件或推理链}
 
 ## 常见误区
@@ -73,32 +30,24 @@ export function parseGuinianTrigger(input: string): string | null {
 
 ### 示例 1｜{类型}
 
-{题目、证明任务或代码目标}
-
-{解答、推导或代码}
+{题目、推导或代码}
 
 ## 待解决问题
 
-1. {下一步仍需澄清或学习的问题}
+1. {下一步问题}
 ```
 
-固定一级内容字段为：
+Use `暂无` rather than deleting an empty section.
 
-1. 标题与学科分类
-2. 定义和核心要点
-3. 常见误区
-4. 例题或代码示例
-5. 待解决问题
+## Copy block
 
-## 5. 机器数据块
+Append this immediately after the human-readable record. Boundary lines must be visible, uppercase, and alone on their lines. The JSON fence is optional for an importer but required in generated chat output.
 
-人类可读记录之后必须紧接：
-
-````markdown
-<!-- YINIAN_GUIAN_V1_START -->
+````text
+YINIAN_GUINIAN_V2_START
 ```json
 {
-  "schema_version": "yinian.guinian/v1",
+  "schema_version": "yinian.guinian/v2",
   "type": "guinian",
   "title": "主题",
   "subject": {
@@ -133,26 +82,37 @@ export function parseGuinianTrigger(input: string): string | null {
   "open_questions": ["待解决问题"]
 }
 ```
-<!-- YINIAN_GUIAN_V1_END -->
+YINIAN_GUINIAN_V2_END
 ````
 
-注意：协议中的标记沿用 `GUIAN` 拼写作为稳定机器标识，不能自行改名。
+Required top-level keys are `schema_version`, `type`, `title`, `subject`, `one_sentence`, `core_points`, `misconceptions`, `examples`, and `open_questions`. Arrays may be empty. `examples[].kind` is one of `concept`, `calculation`, `proof`, `problem`, or `code`.
 
-## 6. 解析规则
+## Importer behavior
 
-应用端应优先解析机器数据块：
+1. Normalize line endings to `\n`.
+2. Locate the last complete v2 boundary pair. This avoids accidentally reading a format example quoted earlier in a conversation.
+3. Extract the text between the boundaries.
+4. Remove one optional opening `` ```json `` line and one optional closing `` ``` `` line.
+5. Parse JSON and validate the required fields and constants.
+6. If v2 is absent, optionally try the legacy `YINIAN_GUIAN_V1_START` / `YINIAN_GUIAN_V1_END` pair.
+7. On failure, retain the pasted source and show the validation error; never silently discard it.
 
-1. 查找 `YINIAN_GUIAN_V1_START` 和 `YINIAN_GUIAN_V1_END`。
-2. 提取两者之间 JSON 代码块的内容。
-3. 使用 `JSON.parse`。
-4. 用 `schemas/guinian.v1.schema.json` 校验。
-5. 校验失败时保留原文，并提示用户修复或重新生成；不得静默丢弃。
-6. 若机器数据块缺失，可显示 Markdown，但不得宣称已经完成结构化导入。
+Reference TypeScript extraction logic:
 
-## 7. 跨会话生效条件
-
-把文件上传 GitHub 只建立了“单一事实来源”，不会让所有 ChatGPT 会话自动读取它。要稳定识别：
-
-- 在 ChatGPT“自学规划”项目的自定义指令中加入 `prompts/guinian-system.md`。
-- 新会话必须位于该项目中，或显式提供同一提示词。
-- “一念”网页/小程序若要自动入库，需要实现第 6 节的解析流程。
+```ts
+export function extractGuinianV2(source: string) {
+  const text = source.replace(/\r\n?/g, "\n");
+  const start = "YINIAN_GUINIAN_V2_START";
+  const end = "YINIAN_GUINIAN_V2_END";
+  const endAt = text.lastIndexOf(end);
+  const startAt = endAt < 0 ? -1 : text.lastIndexOf(start, endAt);
+  if (startAt < 0 || endAt < 0) throw new Error("未找到完整的归念 v2 数据边界");
+  let body = text.slice(startAt + start.length, endAt).trim();
+  body = body.replace(/^```(?:json)?\s*\n/i, "").replace(/\n```\s*$/, "");
+  const record = JSON.parse(body);
+  if (record.schema_version !== "yinian.guinian/v2" || record.type !== "guinian") {
+    throw new Error("归念版本或记录类型不匹配");
+  }
+  return record;
+}
+```
