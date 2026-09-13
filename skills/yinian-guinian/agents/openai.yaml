@@ -1,0 +1,4 @@
+interface:
+  display_name: "一念 · 归念"
+  short_description: "生成可复制、可校验的一念学习收束记录"
+  default_prompt: "Use $yinian-guinian to turn this learning session into a copyable 归念 record."
