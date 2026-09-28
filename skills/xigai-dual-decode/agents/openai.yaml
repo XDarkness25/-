@@ -1,0 +1,13 @@
+interface:
+  display_name: 习概独门秘籍 · 双层解码
+  short_description: 重建教材问题链，分级证据解码命题，并准确回退考试语言
+  default_prompt: 使用 $xigai-dual-decode，依据项目教材和现有半成品，重构指定章节的双层解码秘籍。
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
